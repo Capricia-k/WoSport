@@ -61,3 +61,9 @@ Thumbs.db
 # IDE / Editor
 .vscode/
 .idea/
+
+# Logs
+*.log
+*.log.*
+/wosport-backend/log/*
+!/wosport-backend/log/.keep
