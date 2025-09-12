@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  triggered_at: 2025-08-25 23:04:15
+  latitude: 1.5
+  longitude: 1.5
+  status: MyString
+
+two:
+  user: two
+  triggered_at: 2025-08-25 23:04:15
+  latitude: 1.5
+  longitude: 1.5
+  status: MyString

@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  content: MyText
+  privacy: 1
+  comments_count: 1
+  encouragements_count: 1
+
+two:
+  user: two
+  content: MyText
+  privacy: 1
+  comments_count: 1
+  encouragements_count: 1
