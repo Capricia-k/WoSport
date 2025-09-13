@@ -123,12 +123,8 @@ function AppContent() {
         options={{ title: "Add Story" }}
       />
       <Stack.Screen
-        name="screens/social/ViewStory"
+        name="screens/social/story/ViewStory"
         options={{ title: "View Story" }}
-      />
-      <Stack.Screen
-        name="screens/social/story/[userId]"
-        options={{ title: "User Id" }}
       />
     </Stack>
   );

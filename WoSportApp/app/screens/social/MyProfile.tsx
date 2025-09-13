@@ -64,11 +64,63 @@ const styles = StyleSheet.create({
   },
   toastText: { color: "#fff", fontWeight: "600" },
   gridContainer: { padding: 1 },
+  storyRing: {
+    width: 94,
+    height: 94,
+    borderRadius: 47,
+    borderWidth: 3,
+    borderColor: "#E24741",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 20,
+  },
+  storyIndicator: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "#E24741",
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  storyIndicatorText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
 });
 
 interface MyVideoProps {
   uri: string;
   style?: any;
+}
+
+interface Story {
+  id: number;
+  media: Array<{
+    url: string;
+    content_type: string;
+    filename: string;
+  }>;
+  created_at: string;
+  expires_at: string;
+  user: {
+    id: number;
+    first_name: string;
+    avatar_url: string;
+  };
+}
+
+interface StoriesResponse {
+  user: {
+    id: number;
+    first_name: string;
+    avatar_url: string;
+  };
+  stories: Story[];
 }
 
 const Video: React.FC<MyVideoProps> = ({ uri, style }) => {
@@ -85,18 +137,24 @@ const Video: React.FC<MyVideoProps> = ({ uri, style }) => {
 
 export default function MyProfileScreen() {
   const params = useLocalSearchParams();
-  const { userId } = useLocalSearchParams();
-  console.log("Afficher les stories de l'utilisateur :", userId);
   const router = useRouter();
-  const { currentUser, updateCurrentUser } = useUser();
+  const { currentUser } = useUser();
 
-  // ✅ Gestion sécurisée du param targetUserId
-  const targetUserId = params.targetUserId ? Number(params.targetUserId) : null;
+  // ✅ Correction: Vérifier tous les paramètres possibles
+  const userId = params.userId || params.id || params.targetUserId;
+  const numericUserId = userId ? Number(userId) : null;
+
+  // ✅ Utiliser currentUser.id si aucun userId n'est passé en paramètre
+  const targetUserId = numericUserId || currentUser?.id;
+
+  console.log("Afficher les stories de l'utilisateur :", targetUserId);
 
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<ApiPost[]>([]);
+  const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
   const [postsLoading, setPostsLoading] = useState(true);
+  const [storiesLoading, setStoriesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isCurrentUserProfile = currentUser?.id === targetUserId;
@@ -122,7 +180,10 @@ export default function MyProfileScreen() {
   };
 
   useEffect(() => {
-    if (!targetUserId) return;
+    if (!targetUserId) {
+      setLoading(false);
+      return;
+    }
 
     const fetchProfile = async () => {
       try {
@@ -162,8 +223,29 @@ export default function MyProfileScreen() {
       }
     };
 
+    const fetchStories = async () => {
+      try {
+        setStoriesLoading(true);
+        // ✅ Correction: Adapter au format de réponse de l'API
+        const response: StoriesResponse[] = await apiFetch<StoriesResponse[]>(
+          `stories?user_id=${targetUserId}`,
+          { auth: true }
+        );
+
+        // Extraire les stories du premier utilisateur (normalement il n'y en a qu'un)
+        const userStories = response.length > 0 ? response[0].stories : [];
+        setStories(userStories || []);
+      } catch (err) {
+        console.error("[MyProfileScreen] fetch stories error:", err);
+        setStories([]);
+      } finally {
+        setStoriesLoading(false);
+      }
+    };
+
     fetchProfile();
     fetchPosts();
+    fetchStories();
   }, [targetUserId]);
 
   if (!targetUserId) {
@@ -213,17 +295,24 @@ export default function MyProfileScreen() {
       {/* Profil utilisateur */}
       <View style={styles.profileHeader}>
         <TouchableOpacity
-          onPress={() =>
-            router.push({
-              pathname: "./story/[userId]",
-              params: { userId: profileUser.id.toString() }, // toujours en string
-            })
-          }
+          onPress={() => {
+            if (stories.length > 0) {
+              console.log("Navigating to stories for user:", profileUser.id);
+              router.push({
+                pathname: "/screens/social/story/ViewStory",
+                params: { userId: profileUser.id.toString() },
+              });
+            }
+          }}
         >
-          <Image
-            source={{ uri: profileUser.avatar_url }}
-            style={styles.avatar}
-          />
+          <View style={stories.length > 0 ? styles.storyRing : {}}>
+            <Image source={avatarSource} style={styles.avatar} />
+            {stories.length > 0 && (
+              <View style={styles.storyIndicator}>
+                <Text style={styles.storyIndicatorText}>{stories.length}</Text>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
 
         <View style={styles.stats}>

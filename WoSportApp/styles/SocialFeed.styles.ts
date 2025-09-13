@@ -35,7 +35,7 @@ export const styles = StyleSheet.create({
     fontWeight: "500",
   },
   postContainer: {
-    backgroundColor: "#ece5da",
+    backgroundColor: "#c7ccb4",
     borderWidth: 1,
     borderColor: "#333232",
     borderRadius: 20,

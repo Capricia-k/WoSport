@@ -1,4 +1,5 @@
 // app/screens/social/AddStory.tsx
+import { Video as ExpoVideo, ResizeMode } from "expo-av";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -25,29 +26,51 @@ export default function AddStory() {
 
   useEffect(() => {
     (async () => {
-      const photosPerm =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!photosPerm.granted)
-        Alert.alert(
-          "Permission requise",
-          "Autorisez l'accès aux photos/caméra."
-        );
+      const { status: mediaStatus } =
+        await ImagePicker.getMediaLibraryPermissionsAsync();
+      const { status: cameraStatus } =
+        await ImagePicker.getCameraPermissionsAsync();
+
+      if (mediaStatus !== "granted") {
+        const { status } =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert(
+            "Permission requise",
+            "Autorisez l'accès à la bibliothèque média."
+          );
+        }
+      }
     })();
   }, []);
 
+  const getFileType = (uri: string, assetType: string | undefined): string => {
+    // ✅ Correction: Gérer le cas où assetType est undefined
+    if (assetType === "video") return "video/mp4";
+    if (uri.toLowerCase().endsWith(".mov")) return "video/quicktime";
+    if (uri.toLowerCase().endsWith(".avi")) return "video/x-msvideo";
+    if (uri.toLowerCase().endsWith(".mp4")) return "video/mp4";
+    // Par défaut, considérer comme image
+    return "image/jpeg";
+  };
+
   const pick = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
-      // mediaTypes option omise => tout est autorisé
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsMultipleSelection: true,
       quality: 0.8,
     });
+    console.log("Selection result:", res);
 
-    if (res.canceled) return;
+    if (res.canceled) {
+      console.log("Selection canceled");
+      return;
+    }
 
     const selected =
       res.assets?.map((a) => ({
         uri: a.uri,
-        type: a.type === "video" ? "video/mp4" : "image/jpeg",
+        type: getFileType(a.uri, a.type), // ✅ a.type peut être undefined
       })) ?? [];
 
     setItems((p) => [...p, ...selected]);
@@ -64,7 +87,7 @@ export default function AddStory() {
     }
 
     const result = await ImagePicker.launchCameraAsync({
-      // mediaTypes option omise => tout est autorisé
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
       quality: 1,
     });
 
@@ -72,7 +95,7 @@ export default function AddStory() {
       const newItems =
         result.assets.map((asset) => ({
           uri: asset.uri,
-          type: asset.type === "image" ? "image/jpeg" : "video/mp4",
+          type: getFileType(asset.uri, asset.type),
         })) ?? [];
       setItems((p) => [...p, ...newItems]);
     }
@@ -99,7 +122,6 @@ export default function AddStory() {
         method: "POST",
         headers: {
           Authorization: `Bearer ${currentUser.token}`,
-          // Do NOT set Content-Type — fetch sets the multipart boundary automatically
         },
         body: formData,
       });
@@ -134,7 +156,7 @@ export default function AddStory() {
           <TouchableOpacity onPress={takePhoto} style={{ marginRight: 12 }}>
             <Text>📷 Camera</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => pick()}>
+          <TouchableOpacity onPress={pick}>
             <Text>🖼 Galerie</Text>
           </TouchableOpacity>
         </View>
@@ -142,10 +164,20 @@ export default function AddStory() {
         <ScrollView horizontal style={{ marginBottom: 12 }}>
           {items.map((it, i) => (
             <View key={i} style={{ marginRight: 8 }}>
-              <Image
-                source={{ uri: it.uri }}
-                style={{ width: 120, height: 200, borderRadius: 8 }}
-              />
+              {it.type.includes("video") ? (
+                <ExpoVideo
+                  source={{ uri: it.uri }}
+                  style={{ width: 120, height: 200, borderRadius: 8 }}
+                  resizeMode={ResizeMode.COVER}
+                  shouldPlay={false}
+                  isMuted={true}
+                />
+              ) : (
+                <Image
+                  source={{ uri: it.uri }}
+                  style={{ width: 120, height: 200, borderRadius: 8 }}
+                />
+              )}
             </View>
           ))}
         </ScrollView>

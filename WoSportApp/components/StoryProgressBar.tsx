@@ -1,42 +1,54 @@
+// components/StoryProgressBar.tsx
 import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 
 type Props = {
-  createdAt: string; // ex: "2025-09-11T10:00:00Z"
-  expiresAt: string; // ex: "2025-09-12T10:00:00Z"
+  duration?: number; // Durée en ms
   onComplete?: () => void;
+  isPaused?: boolean;
+  isActive?: boolean;
 };
 
 export default function StoryProgressBar({
-  createdAt,
-  expiresAt,
+  duration = 5000,
   onComplete,
+  isPaused = false,
+  isActive = true,
 }: Props) {
   const progress = useRef(new Animated.Value(0)).current;
-
-  // Convertir en timestamp
-  const created = new Date(createdAt).getTime();
-  const expires = new Date(expiresAt).getTime();
-  const now = Date.now();
-
-  // Temps total et restant (en ms)
-  const totalDuration = expires - created;
-  const remainingDuration = Math.max(expires - now, 0);
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    if (remainingDuration <= 0) {
-      if (onComplete) onComplete();
+    if (!isActive) {
+      progress.setValue(0);
       return;
     }
 
-    Animated.timing(progress, {
+    if (isPaused) {
+      if (animationRef.current) {
+        animationRef.current.stop();
+      }
+      return;
+    }
+
+    animationRef.current = Animated.timing(progress, {
       toValue: 1,
-      duration: remainingDuration,
+      duration: duration,
       useNativeDriver: false,
-    }).start(() => {
-      if (onComplete) onComplete();
     });
-  }, [remainingDuration]);
+
+    animationRef.current.start(({ finished }) => {
+      if (finished && onComplete) {
+        onComplete();
+      }
+    });
+
+    return () => {
+      if (animationRef.current) {
+        animationRef.current.stop();
+      }
+    };
+  }, [isActive, isPaused, duration]);
 
   const width = progress.interpolate({
     inputRange: [0, 1],
@@ -53,12 +65,12 @@ export default function StoryProgressBar({
 const styles = StyleSheet.create({
   container: {
     height: 3,
-    backgroundColor: "#ddd",
+    backgroundColor: "#FFFFFF40",
     borderRadius: 2,
     overflow: "hidden",
   },
   bar: {
     height: "100%",
-    backgroundColor: "#E24741", // couleur WoSport
+    backgroundColor: "#FFFFFF",
   },
 });

@@ -385,7 +385,7 @@ export default function SocialFeed() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F0E8" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#e4d9c3" }}>
       <SocialHeader />
 
       {/* STORIES */}
