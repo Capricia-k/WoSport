@@ -18,9 +18,13 @@ module Api
       end
 
       def update_profile
+        Rails.logger.info "Params received: #{params.inspect}"
+        Rails.logger.info "User params: #{user_params.inspect}"
+
         if current_user.update(user_params)
           render json: current_user.as_json(methods: :avatar_url)
         else
+          Rails.logger.error "Update failed: #{current_user.errors.full_messages}"
           render json: { errors: current_user.errors.full_messages }, status: :unprocessable_entity
         end
       end
@@ -80,16 +84,11 @@ module Api
       end
 
       def user_params
-        params.require(:user).permit(
-          :first_name,
-          :last_name,
-          :email,
-          :password,
-          :password_confirmation,
-          :avatar,
-          :bio,
-          :profile_visibility
-        )
+        if params[:user]
+          params.require(:user).permit(:first_name, :last_name, :email, :password, :password_confirmation, :avatar, :bio, :profile_visibility)
+        else
+          params.permit(:first_name, :last_name, :email, :password, :password_confirmation, :avatar, :bio, :profile_visibility)
+        end
       end
 
       def avatar_params

@@ -5,22 +5,34 @@ module Api
       before_action :authenticate_user!
 
       # GET /api/v1/stories
-      # Retourne les stories actives, groupées par user
       def index
         set_default_host!
-        stories = Story.active.includes(media_attachments: :blob, user: :followers)
-        grouped = stories.group_by(&:user_id).map do |user_id, user_stories|
+
+        # Get users that current user follows + current user's own stories
+        followed_user_ids = current_user.following.pluck(:id) << current_user.id
+
+        stories = Story.active
+                      .where(user_id: followed_user_ids)
+                      .includes(:user, media_attachments: :blob)
+                      .order(created_at: :desc)
+
+        # Group by user
+        grouped_stories = stories.group_by(&:user_id).map do |user_id, user_stories|
           user = User.find(user_id)
           {
-            user: user.as_json(only: [:id, :first_name], methods: [:avatar_url]),
+            user: {
+              id: user.id,
+              first_name: user.first_name,
+              avatar_url: user.avatar_url
+            },
             stories: user_stories.map { |s| serialize_story(s) }
           }
         end
-        render json: grouped
+
+        render json: grouped_stories
       end
 
       # POST /api/v1/stories
-      # Body: multipart form-data with story[media][] files
       def create
         story = current_user.stories.build(expires_at: 24.hours.from_now)
 

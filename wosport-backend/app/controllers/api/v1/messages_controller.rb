@@ -44,6 +44,10 @@ module Api
 
       # POST /api/v1/messages/:user_id
       def create
+        puts "=== MESSAGE CREATE PARAMS ==="
+        puts params.inspect
+        puts "Current user: #{current_user.id}"
+
         other_user = User.find(params[:user_id])
         message = Message.new(
           sender: current_user,
@@ -52,7 +56,12 @@ module Api
           post_id: params[:post_id]
         )
 
+        puts "Message attributes: #{message.attributes}"
+        puts "Message valid?: #{message.valid?}"
+        puts "Message errors: #{message.errors.full_messages}" if message.invalid?
+
         if message.save
+          puts "Message saved successfully!"
           if other_user.expo_push_token.present?
             NotificationService.send_push(
               token: other_user.expo_push_token,
@@ -72,6 +81,7 @@ module Api
             post: message.post.present? ? serialize_post(message.post) : nil
           }, status: :created
         else
+          puts "Message save failed: #{message.errors.full_messages}"
           render json: { errors: message.errors.full_messages }, status: :unprocessable_entity
         end
       end
