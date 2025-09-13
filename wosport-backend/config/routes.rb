@@ -64,8 +64,11 @@ Rails.application.routes.draw do
       # Follows
       resources :follows, only: [:create, :destroy]
 
-      # Stories → place ton code ici
-      resources :stories, only: [:index, :create, :show, :destroy]
+      resources :stories, only: [:index, :create, :show, :destroy] do
+        resources :reactions, only: [:create, :index, :destroy]
+        get 'viewers', on: :member
+        post 'messages', on: :member
+      end
     end
   end
 end

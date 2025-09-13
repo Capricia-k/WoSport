@@ -1,6 +1,7 @@
 class Story < ApplicationRecord
   belongs_to :user
-  has_many_attached :media # images & videos
+  has_many_attached :media
+  has_many :reactions, dependent: :destroy
 
   validates :expires_at, presence: true
 

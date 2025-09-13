@@ -101,20 +101,34 @@ export async function apiFetch<T>(
     headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(`${API_BASE}/${path}`, {
+  const url = `${API_BASE}/${path}`;
+  console.log("🔍 API Request:", {
+    url,
     method: options.method || "GET",
     headers,
-    body:
-      options.body instanceof FormData
-        ? options.body
-        : options.body
-        ? JSON.stringify(options.body)
-        : undefined,
+    body: options.body
+  });
+
+  const res = await fetch(url, {
+    method: options.method || "GET",
+    headers,
+    body: options.body instanceof FormData
+      ? options.body
+      : options.body
+      ? JSON.stringify(options.body)
+      : undefined,
+  });
+
+  console.log("🔍 API Response:", {
+    status: res.status,
+    statusText: res.statusText,
+    url: res.url
   });
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => null);
-    throw new Error(errorData?.error || `HTTP error! status: ${res.status}`);
+    const errorText = await res.text();
+    console.error("🔍 API Error:", errorText);
+    throw new Error(errorText || `HTTP error! status: ${res.status}`);
   }
 
   // Gestion des réponses vides (ex: 204 No Content)
