@@ -13,7 +13,13 @@ class Api::V1::EncouragementsController < ApplicationController
       message = "added"
     end
 
-    render json: { status: message, encouragements_count: @post.encouragements.count }
+    @post.reload # 🔑 recharge les associations pour avoir un compteur fiable
+
+    render json: {
+      status: message,
+      encouragements_count: @post.encouragements.count,
+      is_encouraged: @post.encouragements.exists?(user: current_user) # 👈 pratique pour ton front
+    }
   end
 
   private

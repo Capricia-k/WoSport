@@ -20,6 +20,9 @@ class User < ApplicationRecord
   has_many :stories, dependent: :destroy
   has_many :reactions, dependent: :destroy
 
+  has_one  :nutrition_profile, dependent: :destroy
+  has_many :meal_logs, dependent: :destroy
+
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable,
          :jwt_authenticatable, jwt_revocation_strategy: JwtDenylist

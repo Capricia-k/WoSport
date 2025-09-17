@@ -1,0 +1,35 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  meal_log: one
+  source: MyString
+  external_id: MyString
+  name: MyString
+  brand: MyString
+  serving_qty: 9.99
+  serving_unit: MyString
+  kcal: 9.99
+  protein_g: 9.99
+  carbs_g: 9.99
+  fat_g: 9.99
+  fiber_g: 9.99
+  sugar_g: 9.99
+  sodium_mg: 1
+  off_barcode: MyString
+
+two:
+  meal_log: two
+  source: MyString
+  external_id: MyString
+  name: MyString
+  brand: MyString
+  serving_qty: 9.99
+  serving_unit: MyString
+  kcal: 9.99
+  protein_g: 9.99
+  carbs_g: 9.99
+  fat_g: 9.99
+  fiber_g: 9.99
+  sugar_g: 9.99
+  sodium_mg: 1
+  off_barcode: MyString

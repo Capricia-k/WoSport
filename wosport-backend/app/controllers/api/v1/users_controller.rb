@@ -77,6 +77,20 @@ module Api
         render json: user.following.as_json(only: [:id, :first_name, :avatar_url])
       end
 
+      def search
+        query = params[:query]
+
+        users = if query.present?
+                  User.where("first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ?", 
+                    "%#{query}%", "%#{query}%", "%#{query}%"
+                  ).limit(20)
+                else
+                  []
+                end
+
+        render json: users.as_json(only: [:id, :first_name, :last_name, :avatar_url])
+      end
+
       private
 
       def set_user

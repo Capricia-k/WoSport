@@ -17,6 +17,13 @@ Rails.application.routes.draw do
   resources :workouts, only: [:index, :show]
   resources :videos
 
+  namespace :nutrition do
+    resources :meal_logs, only: [:index, :create, :destroy] do
+      resources :food_entries, only: [:create, :destroy]
+    end
+    get :search, to: 'foods#search'
+  end
+
   namespace :api do
     namespace :v1 do
       # Cycles
@@ -46,6 +53,7 @@ Rails.application.routes.draw do
       resources :users, only: [:index, :update, :show] do
         post :avatar, on: :member
         patch :toggle_visibility, on: :collection
+        get :search, on: :collection
         get :friends, on: :collection
         get 'conversation', to: 'messages#conversation', on: :member
 
