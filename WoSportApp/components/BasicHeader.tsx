@@ -5,7 +5,7 @@ import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useUser } from "../context/UserContext";
 import { getUnreadMessagesCount } from "../services/api";
 
-export default function SocialHeader() {
+export default function BasicHeader() {
   const router = useRouter();
   const { currentUser } = useUser();
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -36,32 +36,27 @@ export default function SocialHeader() {
 
   return (
     <View style={styles.header}>
-      {/* Colonne gauche */}
-      <TouchableOpacity onPress={() => router.back()} style={styles.left}>
-        <Ionicons name="chevron-back" size={28} color="#3c3c3c" />
-      </TouchableOpacity>
+      {/* Zone gauche */}
+      <View style={styles.side}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={28} color="#3c3c3c" />
+        </TouchableOpacity>
+      </View>
 
-      {/* Logo centré */}
+      {/* Zone centre (logo) */}
       <TouchableOpacity
         onPress={() => router.push("/screens/social/SocialFeed")}
         style={styles.center}
       >
         <Image
-          source={require("../assets/images/Logo_marron.png")}
+          source={require("../assets/images/wo-logo.png")}
           style={styles.logo}
           resizeMode="contain"
         />
       </TouchableOpacity>
 
-      {/* Colonne droite */}
-      <View style={styles.right}>
-        <TouchableOpacity
-          style={styles.icon}
-          onPress={() => router.push("/screens/social/SearchUser")}
-        >
-          <Ionicons name="search-outline" size={28} color="#3c3c3c" />
-        </TouchableOpacity>
-      </View>
+      {/* Zone droite (placeholder vide pour équilibrer) */}
+      <View style={styles.side} />
     </View>
   );
 }
@@ -75,43 +70,17 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: "#F5F0E8",
     width: "100%",
-    position: "relative",
   },
-  left: {
+  side: {
     width: 40,
-    alignItems: "flex-start",
+    alignItems: "center",
   },
   center: {
-    position: "absolute",
-    left: "55%",
-    transform: [{ translateX: -60 }],
+    flex: 1,
+    alignItems: "center",
   },
   logo: {
     width: 120,
-    height: 60,
-  },
-  right: {
-    width: 40,
-    alignItems: "flex-end",
-  },
-  icon: {
-    position: "relative",
-  },
-  badge: {
-    position: "absolute",
-    right: -8,
-    top: -6,
-    backgroundColor: "#E24741",
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 4,
-  },
-  badgeText: {
-    color: "#fff",
-    fontSize: 11,
-    fontWeight: "700",
+    height: 50,
   },
 });

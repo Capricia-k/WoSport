@@ -48,8 +48,20 @@ interface Post {
   encouragements: Encouragement[];
 }
 
+// ⚡️ Si l'API renvoie un type différent, on le normalise ici
+const normalizePost = (p: any): Post => ({
+  id: p.id,
+  content: p.content,
+  media_url: p.media_url,
+  comments_count: p.comments_count,
+  encouragements_count: p.encouragements_count,
+  user: p.user,
+  comments: p.comments ?? [],
+  encouragements: p.encouragements ?? [],
+});
+
 export default function SocialFeed() {
-  const currentUser = useUser(); // 👈 récupère le user ici
+  const currentUser = useUser();
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [commentTexts, setCommentTexts] = useState<{ [key: number]: string }>(
@@ -66,11 +78,12 @@ export default function SocialFeed() {
     setLoading(true);
     try {
       const data = await getPosts(nextPage);
+      const normalized = data.map(normalizePost); // ⚡️ Normalisation
       if (nextPage === 1) {
-        setPosts(data);
+        setPosts(normalized);
       } else {
-        const newPosts = data.filter(
-          (p: Post) => !posts.some((x) => x.id === p.id)
+        const newPosts = normalized.filter(
+          (p) => !posts.some((x) => x.id === p.id)
         );
         setPosts((prev) => [...prev, ...newPosts]);
       }
@@ -200,7 +213,8 @@ export default function SocialFeed() {
         >
           <Text style={styles.comment}>{c.body}</Text>
           {currentUser &&
-            currentUser.id === c.user_id && ( // 👈 check ici
+            "id" in currentUser &&
+            currentUser.id === c.user_id && ( // ✅ check sécurisé
               <TouchableOpacity
                 onPress={() => handleDeleteComment(item.id, c.id)}
               >
@@ -269,5 +283,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     height: 36,
   },
-  sendIcon: { marginLeft: 10, color: "#000", fontWeight: "light" },
 });

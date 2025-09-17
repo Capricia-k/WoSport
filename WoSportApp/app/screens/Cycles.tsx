@@ -48,7 +48,7 @@ export default function Cycles() {
     const fetchCycles = async () => {
       try {
         const data = await getCycles();
-        setCycles(data);
+        setCycles(data as Cycle[]); // 🔹 cast ici
       } catch (error) {
         console.error("Error fetching cycles:", error);
       } finally {
@@ -97,7 +97,7 @@ export default function Cycles() {
       });
 
       const updatedCycles = await getCycles();
-      setCycles(updatedCycles);
+      setCycles(updatedCycles as Cycle[]);
 
       setSelectedDate("");
       setNotes("");

@@ -91,7 +91,7 @@ export default function ProfileScreen() {
   const avatarSource = currentUser.avatar_url
     ? { uri: currentUser.avatar_url }
     : {
-        uri: `https://ui-avatars.com/api/?name=${currentUser.first_name}&background=E24741&color=fff`,
+        uri: `https://ui-avatars.com/api/?name=${currentUser.first_name}&background=9b5f2f&color=fff`,
       };
 
   return (
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   cameraText: { fontSize: 16 },
   name: { fontSize: 22, fontWeight: "bold" },
-  plan: { color: "#d9534f", marginBottom: 20 },
+  plan: { color: "#9b5f2f", marginBottom: 20 },
   tabBar: {
     flexDirection: "row",
     borderBottomWidth: 1,

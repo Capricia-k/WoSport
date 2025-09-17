@@ -1,33 +1,40 @@
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  StyleProp,
   StyleSheet,
   Text,
+  TextStyle,
   TouchableOpacity,
+  ViewStyle,
 } from "react-native";
 import { followUser, unfollowUser } from "../services/api";
 
 type FollowResponse = {
-  success?: boolean; // optionnel
+  success?: boolean;
   follow_id?: number;
   followers_count?: number;
   is_following?: boolean;
 };
 
-type Props = {
+interface FollowButtonProps {
   targetUserId: number;
   initialIsFollowing: boolean;
-  initialFollowId?: number | null;
-  token: string;
+  initialFollowId: number | null;
   initialFollowersCount: number;
-};
+  token: string;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
+}
 
-export const FollowButton: React.FC<Props> = ({
+export const FollowButton: React.FC<FollowButtonProps> = ({
   targetUserId,
   initialIsFollowing,
-  token,
-  initialFollowId = null,
+  initialFollowId,
   initialFollowersCount,
+  token,
+  style,
+  textStyle,
 }) => {
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [followId, setFollowId] = useState<number | null>(initialFollowId);
@@ -36,17 +43,14 @@ export const FollowButton: React.FC<Props> = ({
 
   const handleFollowToggle = async () => {
     setLoading(true);
-
     try {
       if (isFollowing && followId) {
-        // Unfollow
-        const data: FollowResponse = await unfollowUser(followId, token);
+        const data: FollowResponse = await unfollowUser(followId);
         setIsFollowing(false);
         setFollowId(null);
         setFollowersCount(data.followers_count ?? followersCount - 1);
       } else {
-        // Follow
-        const data: FollowResponse = await followUser(targetUserId, token);
+        const data: FollowResponse = await followUser(targetUserId);
         setIsFollowing(true);
         setFollowId(data.follow_id ?? null);
         setFollowersCount(data.followers_count ?? followersCount + 1);
@@ -61,17 +65,25 @@ export const FollowButton: React.FC<Props> = ({
   return (
     <TouchableOpacity
       style={[
-        styles.button,
+        styles.baseBtn,
         isFollowing ? styles.following : styles.notFollowing,
+        style,
       ]}
       onPress={handleFollowToggle}
       disabled={loading}
+      activeOpacity={0.8}
     >
       {loading ? (
-        <ActivityIndicator color={isFollowing ? "#fff" : "#E24741"} />
+        <ActivityIndicator color={isFollowing ? "#333" : "#fff"} />
       ) : (
-        <Text style={[styles.text, !isFollowing && { color: "#E24741" }]}>
-          {isFollowing ? "Following" : "Follow"} ({followersCount})
+        <Text
+          style={[
+            styles.text,
+            isFollowing ? { color: "#333" } : { color: "#fff" },
+            textStyle,
+          ]}
+        >
+          {isFollowing ? "Following" : "Follow"}
         </Text>
       )}
     </TouchableOpacity>
@@ -79,23 +91,29 @@ export const FollowButton: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
-  button: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    alignItems: "center",
+  baseBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: 12,
     justifyContent: "center",
-  },
-  following: {
-    backgroundColor: "#E24741",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   notFollowing: {
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#9b5f2f",
+  },
+  following: {
+    backgroundColor: "#f6f2e9",
     borderWidth: 1,
-    borderColor: "#E24741",
+    borderColor: "#9b5f2f",
   },
   text: {
-    color: "#fff",
-    fontWeight: "bold",
+    fontWeight: "600",
+    fontSize: 16,
   },
 });

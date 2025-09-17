@@ -1,4 +1,13 @@
-import { FlatList, StyleSheet, View } from "react-native";
+// components/ReactionList.tsx
+import {
+  FlatList,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { AppText } from "./AppText";
 
 interface Reaction {
@@ -11,16 +20,17 @@ interface Reaction {
   };
 }
 
-interface ReactionListProps {
+export interface ReactionListProps {
   reactions: Reaction[];
   visible: boolean;
+  onClose: () => void;
 }
 
 const REACTION_EMOJIS: { [key: string]: string } = {
   like: "👍",
   love: "❤️",
   laugh: "😂",
-  surprise: "😮",
+  wow: "😮",
   sad: "😢",
   angry: "😠",
 };
@@ -28,54 +38,126 @@ const REACTION_EMOJIS: { [key: string]: string } = {
 export default function ReactionList({
   reactions,
   visible,
+  onClose,
 }: ReactionListProps) {
-  if (!visible || reactions.length === 0) return null;
+  if (!visible) return null;
+
+  const renderReactionItem = ({
+    item,
+    index,
+  }: {
+    item: Reaction;
+    index: number;
+  }) => (
+    <View style={styles.reactionItem}>
+      <Image source={{ uri: item.user.avatar_url }} style={styles.avatar} />
+      <View style={styles.reactionInfo}>
+        <AppText style={styles.username}>{item.user.first_name}</AppText>
+        <AppText style={styles.reactionType}>
+          {REACTION_EMOJIS[item.reaction_type] || item.reaction_type}
+        </AppText>
+      </View>
+    </View>
+  );
+
+  // Créer une clé unique qui combine ID et index pour éviter les doublons
+  const keyExtractor = (item: Reaction, index: number) =>
+    `${item.id}-${item.user.id}-${index}`;
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={reactions}
-        horizontal
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.reactionItem}>
-            <AppText style={styles.emoji}>
-              {REACTION_EMOJIS[item.reaction_type]}
-            </AppText>
-            <AppText style={styles.username}>{item.user.first_name}</AppText>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Réactions</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Text style={styles.closeText}>✕</Text>
+            </TouchableOpacity>
           </View>
-        )}
-        contentContainerStyle={styles.list}
-      />
-    </View>
+
+          <FlatList
+            data={reactions}
+            keyExtractor={keyExtractor}
+            renderItem={renderReactionItem}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>
+                  Aucune réaction pour le moment
+                </Text>
+              </View>
+            }
+          />
+        </View>
+      </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    position: "absolute",
-    bottom: 60,
-    left: 0,
-    right: 0,
-    zIndex: 999,
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-  list: {
-    paddingHorizontal: 16,
+  modalContent: {
+    width: "80%",
+    maxHeight: "70%",
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 16,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  closeButton: {
+    padding: 4,
+  },
+  closeText: {
+    fontSize: 18,
+    fontWeight: "bold",
   },
   reactionItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    borderRadius: 20,
-    padding: 8,
-    marginRight: 8,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
   },
-  emoji: {
-    fontSize: 16,
-    marginRight: 4,
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  reactionInfo: {
+    flex: 1,
   },
   username: {
-    fontSize: 12,
-    color: "#333",
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  reactionType: {
+    fontSize: 20,
+  },
+  emptyContainer: {
+    padding: 20,
+    alignItems: "center",
+  },
+  emptyText: {
+    color: "#999",
+    fontStyle: "italic",
   },
 });

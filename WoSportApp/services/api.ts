@@ -4,7 +4,7 @@ import * as Notifications from "expo-notifications";
 import { Alert, Platform } from "react-native";
 import { getItem, setItem } from "./storage";
 
-const API_BASE = "http://192.168.1.164:3000/api/v1";
+export const API_BASE = "http://192.168.1.164:3000/api/v1";
 
 // ------------------ TYPES ------------------
 export type Visibility = "public" | "private";
@@ -20,6 +20,7 @@ export interface User {
   profileVisibility: ProfileVisibility;
   followers?: number[];
   following?: number[];
+  is_verified?: boolean;
 }
 
 export interface Comment {
@@ -97,6 +98,8 @@ export async function apiFetch<T>(
   options: { method?: string; body?: any; auth?: boolean } = {}
 ): Promise<T> {
   const headers = await getAuthHeaders(options.auth);
+  
+  // Ne pas ajouter Content-Type pour FormData (le navigateur le fera automatiquement)
   if (options.body && !(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
@@ -106,7 +109,7 @@ export async function apiFetch<T>(
     url,
     method: options.method || "GET",
     headers,
-    body: options.body
+    body: options.body instanceof FormData ? "FormData" : options.body
   });
 
   const res = await fetch(url, {
@@ -131,7 +134,6 @@ export async function apiFetch<T>(
     throw new Error(errorText || `HTTP error! status: ${res.status}`);
   }
 
-  // Gestion des réponses vides (ex: 204 No Content)
   if (res.status === 204) {
     return undefined as unknown as T;
   }
@@ -441,9 +443,29 @@ export const toggleEncouragement = async (postId: number) =>
   }
 
   const data = await res.json();
-  return data.map(mapUserFromApi); // pour typage User
+  return data.map(mapUserFromApi);
 };
 
+export async function searchUsers(query: string, token?: string) {
+  try {
+    const response = await fetch(
+      `${API_BASE}/users/search?query=${encodeURIComponent(query)}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      }
+    );
+
+    if (!response.ok) throw new Error("Erreur recherche utilisateur");
+    return await response.json();
+  } catch (error) {
+    console.error("[searchUsers]", error);
+    return [];
+  }
+}
 
 
 // ------------------ NOTIFICATIONS ------------------

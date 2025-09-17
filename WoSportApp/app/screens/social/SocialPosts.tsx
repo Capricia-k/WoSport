@@ -56,7 +56,7 @@ export default function SocialPosts({
   }, [userId]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F0E8" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#E8DCC8" }}>
       <Header />
 
       {loading ? (
