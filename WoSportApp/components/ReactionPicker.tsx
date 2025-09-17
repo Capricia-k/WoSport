@@ -1,78 +1,98 @@
-import { useState } from "react";
-import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
-import { AppText } from "./AppText";
-
-const REACTIONS = [
-  { type: "like", emoji: "👍", color: "#1877F2" },
-  { type: "love", emoji: "❤️", color: "#F33E58" },
-  { type: "laugh", emoji: "😂", color: "#F7B928" },
-  { type: "surprise", emoji: "😮", color: "#F7B928" },
-  { type: "sad", emoji: "😢", color: "#F7B928" },
-  { type: "angry", emoji: "😠", color: "#E74C3C" },
-];
+// components/ReactionPicker.tsx
+import React from "react";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface ReactionPickerProps {
-  onReaction: (reactionType: string) => void;
   visible: boolean;
+  onReaction: (reactionType: number) => void;
   onClose: () => void;
 }
 
-export default function ReactionPicker({
-  onReaction,
-  visible,
-  onClose,
-}: ReactionPickerProps) {
-  const [animation] = useState(new Animated.Value(0));
+const REACTIONS = [
+  { type: 0, emoji: "👍", label: "Like" },
+  { type: 1, emoji: "❤️", label: "Love" },
+  { type: 2, emoji: "😂", label: "Laugh" },
+  { type: 3, emoji: "😮", label: "Wow" },
+  { type: 4, emoji: "😢", label: "Sad" },
+  { type: 5, emoji: "😠", label: "Angry" },
+];
 
+const ReactionPicker: React.FC<ReactionPickerProps> = ({
+  visible,
+  onReaction,
+  onClose,
+}) => {
   if (!visible) return null;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.picker}>
-        {REACTIONS.map((reaction) => (
-          <TouchableOpacity
-            key={reaction.type}
-            style={styles.reactionButton}
-            onPress={() => {
-              onReaction(reaction.type);
-              onClose();
-            }}
-          >
-            <AppText style={[styles.emoji, { fontSize: 28 }]}>
-              {reaction.emoji}
-            </AppText>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
+    <Modal
+      transparent
+      visible={visible}
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity
+        style={styles.overlay}
+        activeOpacity={1}
+        onPress={onClose}
+      >
+        <View style={styles.container}>
+          <View style={styles.reactionsContainer}>
+            {REACTIONS.map((reaction) => (
+              <TouchableOpacity
+                key={reaction.type}
+                style={styles.reactionButton}
+                onPress={() => {
+                  console.log("🔍 Selected reaction:", reaction.type);
+                  onReaction(reaction.type);
+                  onClose();
+                }}
+              >
+                <Text style={styles.reactionEmoji}>{reaction.emoji}</Text>
+                <Text style={styles.reactionLabel}>{reaction.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Modal>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
-    position: "absolute",
-    bottom: 100,
-    left: 0,
-    right: 0,
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
     alignItems: "center",
-    zIndex: 1000,
   },
-  picker: {
-    flexDirection: "row",
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 30,
-    padding: 10,
+  container: {
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowRadius: 4,
     elevation: 5,
   },
-  reactionButton: {
-    padding: 8,
-    marginHorizontal: 4,
+  reactionsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
   },
-  emoji: {
-    fontSize: 24,
+  reactionButton: {
+    padding: 10,
+  },
+  reactionEmoji: {
+    fontSize: 30,
+  },
+  reactionLabel: {
+    color: "#000",
   },
 });
+
+export default ReactionPicker;

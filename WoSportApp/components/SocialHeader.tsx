@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useUser } from "../context/UserContext";
 import { getUnreadMessagesCount } from "../services/api";
 
@@ -36,54 +36,30 @@ export default function SocialHeader() {
 
   return (
     <View style={styles.header}>
-      {/* Bouton retour */}
-      <TouchableOpacity onPress={() => router.back()}>
+      {/* Colonne gauche */}
+      <TouchableOpacity onPress={() => router.back()} style={styles.left}>
         <Ionicons name="chevron-back" size={28} color="#3c3c3c" />
       </TouchableOpacity>
 
       {/* Logo centré */}
       <TouchableOpacity
         onPress={() => router.push("/screens/social/SocialFeed")}
+        style={styles.center}
       >
         <Image
-          source={require("../assets/images/wo-logo.png")}
+          source={require("../assets/images/Logo_marron.png")}
           style={styles.logo}
           resizeMode="contain"
         />
       </TouchableOpacity>
 
-      {/* Icônes à droite */}
-      <View style={styles.rightIcons}>
+      {/* Colonne droite */}
+      <View style={styles.right}>
         <TouchableOpacity
           style={styles.icon}
-          disabled={!currentUser}
-          onPress={() => {
-            if (!currentUser) return;
-            router.push({
-              pathname: "/screens/social/MyProfile",
-              params: { targetUserId: currentUser.id.toString() },
-            });
-          }}
+          onPress={() => router.push("/screens/social/SearchUser")}
         >
-          <Ionicons name="person-outline" size={24} color="#3c3c3c" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.icon}
-          disabled={!currentUser}
-          onPress={() => {
-            if (!currentUser) return;
-            router.push("/screens/social/Inbox");
-          }}
-        >
-          <Ionicons name="mail-outline" size={24} color="#3c3c3c" />
-          {unreadCount > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </Text>
-            </View>
-          )}
+          <Ionicons name="search-outline" size={28} color="#3c3c3c" />
         </TouchableOpacity>
       </View>
     </View>
@@ -93,24 +69,32 @@ export default function SocialHeader() {
 const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#e4d9c3",
+    backgroundColor: "#F5F0E8",
     width: "100%",
+    position: "relative",
+  },
+  left: {
+    width: 40,
+    alignItems: "flex-start",
+  },
+  center: {
+    position: "absolute",
+    left: "55%",
+    transform: [{ translateX: -60 }],
   },
   logo: {
     width: 120,
-    height: 40,
-    marginLeft: 64,
+    height: 60,
   },
-  rightIcons: {
-    flexDirection: "row",
-    alignItems: "center",
+  right: {
+    width: 40,
+    alignItems: "flex-end",
   },
   icon: {
-    marginLeft: 20,
     position: "relative",
   },
   badge: {

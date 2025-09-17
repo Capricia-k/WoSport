@@ -9,7 +9,7 @@ class Reaction < ApplicationRecord
     like: 0,
     love: 1,
     laugh: 2,
-    surprise: 3,
+    wow: 3,
     sad: 4,
     angry: 5
   }

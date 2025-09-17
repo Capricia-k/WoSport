@@ -1,0 +1,87 @@
+<div class="max-w-3xl mx-auto p-4 space-y-6">
+  <h1 class="text-2xl font-bold">Nutrition — <%= l @date %></h1>
+
+  <% if @profile %>
+    <% kcal_used = @logs.sum { |l| l.totals.kcal.to_f } %>
+    <% kcal_target = @profile.calorie_target.to_i %>
+    <div class="bg-white p-4 rounded-xl shadow flex items-center justify-between">
+      <div>
+        <div class="text-sm text-gray-500">Calories</div>
+        <div class="text-3xl font-semibold"><%= kcal_used.round %> / <%= kcal_target %> kcal</div>
+      </div>
+      <div class="w-1/2">
+        <div class="w-full bg-gray-200 rounded h-3">
+          <% ratio = [[kcal_used / [kcal_target,1].max, 0].max, 1].min %>
+          <div class="h-3 rounded bg-emerald-500" style="width:<%= (ratio*100).round %>%"></div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <% [:breakfast,:lunch,:dinner,:snack].each do |mt| %>
+    <% log = @logs.find { |l| l.meal_type == mt.to_s } || current_user.meal_logs.build(ate_on: @date, meal_type: MealLog.meal_types[mt]) %>
+    <div class="bg-white p-4 rounded-xl shadow space-y-3" data-controller="food-search">
+      <div class="flex items-center justify-between">
+        <h2 class="font-semibold capitalize"><%= mt %></h2>
+        <% if log.persisted? %>
+          <span class="text-sm text-gray-500"><%= log.totals.kcal.to_f.round %> kcal</span>
+        <% else %>
+          <%= button_to "Créer la section", nutrition_meal_logs_path(ate_on: @date, meal_type: mt), method: :post, class:"text-sm px-3 py-1 rounded bg-gray-200" %>
+        <% end %>
+      </div>
+
+      <% if log.persisted? %>
+        <div class="space-y-2">
+          <% log.food_entries.each do |fe| %>
+            <div class="flex items-center justify-between text-sm">
+              <div><%= fe.name %> <span class="text-gray-500">(<%= fe.serving_qty %> <%= fe.serving_unit %>)</span></div>
+              <div class="flex items-center gap-3">
+                <span><%= fe.kcal.to_f.round %> kcal</span>
+                <%= button_to "×", nutrition_meal_log_food_entry_path(log, fe), method: :delete, class:"px-2 py-1 bg-red-100 rounded" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="relative">
+          <input type="text" placeholder="Rechercher un aliment…"
+                 class="w-full border rounded px-3 py-2"
+                 data-food-search-target="input" data-action="input->food-search#query">
+          <div class="absolute z-10 bg-white border rounded w-full mt-1 hidden" data-food-search-target="results"></div>
+        </div>
+
+        <form action="<%= nutrition_meal_log_food_entries_path(log) %>" method="post" class="space-y-2">
+          <%= csrf_meta_tags %>
+          <input type="hidden" name="item[source]" value="off">
+          <input type="hidden" name="item[external_id]">
+          <input type="hidden" name="item[off_barcode]">
+          <input type="hidden" name="item[name]">
+          <input type="hidden" name="item[brand]">
+          <div class="grid grid-cols-3 gap-2">
+            <label class="text-sm">Portion (g)
+              <input name="item[serving_qty]" type="number" step="1" value="100" class="w-full border rounded px-2 py-1" data-food-search-target="qty" data-action="input->food-search#recalc">
+            </label>
+            <label class="text-sm">Unité
+              <input name="item[serving_unit]" value="g" class="w-full border rounded px-2 py-1">
+            </label>
+            <div class="text-sm flex items-end justify-end">
+              <span data-food-search-target="preview" class="font-semibold">—</span>
+            </div>
+          </div>
+
+          <div class="hidden">
+            <input name="item[kcal]">
+            <input name="item[protein_g]">
+            <input name="item[carbs_g]">
+            <input name="item[fat_g]">
+            <input name="item[fiber_g]">
+            <input name="item[sugar_g]">
+            <input name="item[sodium_mg]">
+          </div>
+
+          <button class="px-3 py-2 bg-emerald-600 text-white rounded">Ajouter</button>
+        </form>
+      <% end %>
+    </div>
+  <% end %>
+</div>

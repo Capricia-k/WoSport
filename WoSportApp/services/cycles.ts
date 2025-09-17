@@ -1,8 +1,18 @@
 import { apiFetch } from "../services/api";
 
+export type Cycle = {
+  id: number;
+  start_date: string;
+  end_date: string;
+  symptoms?: Record<string, boolean>;
+  notes?: string;
+};
+
 // Récupérer tous les cycles de l'utilisateur connecté
-export const getCycles = async () => {
-  return apiFetch("api/v1/cycles", { method: "GET", auth: true });
+export const getCycles = async (): Promise<Cycle[]> => {
+  const res = await fetch('/api/cycles');
+  const data = await res.json();
+  return data as Cycle[];
 };
 
 // Créer un nouveau cycle

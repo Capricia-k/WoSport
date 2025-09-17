@@ -9,7 +9,7 @@ class ApplicationController < ActionController::API
       raw_body = request.body.read
       # Force l'encodage UTF-8 pour éviter les problèmes d'emoji
       raw_body.force_encoding('UTF-8') if raw_body.encoding != Encoding::UTF_8
-      
+
       data = JSON.parse(raw_body)
       params.merge!(data) if data.is_a?(Hash)
       request.body.rewind
@@ -35,4 +35,5 @@ class ApplicationController < ActionController::API
     Rails.logger.error "Failed to parse even with forced encoding: #{e.message}"
   end
 end
+
 

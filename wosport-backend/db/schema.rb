@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_09_13_141556) do
+ActiveRecord::Schema[7.1].define(version: 2025_09_17_150048) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -93,12 +93,43 @@ ActiveRecord::Schema[7.1].define(version: 2025_09_13_141556) do
     t.index ["follower_id"], name: "index_follows_on_follower_id"
   end
 
+  create_table "food_entries", force: :cascade do |t|
+    t.bigint "meal_log_id", null: false
+    t.string "source"
+    t.string "external_id"
+    t.string "name"
+    t.string "brand"
+    t.decimal "serving_qty"
+    t.string "serving_unit"
+    t.decimal "kcal"
+    t.decimal "protein_g"
+    t.decimal "carbs_g"
+    t.decimal "fat_g"
+    t.decimal "fiber_g"
+    t.decimal "sugar_g"
+    t.integer "sodium_mg"
+    t.string "off_barcode"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["meal_log_id"], name: "index_food_entries_on_meal_log_id"
+  end
+
   create_table "jwt_denylists", force: :cascade do |t|
     t.string "jti"
     t.datetime "exp"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["jti"], name: "index_jwt_denylists_on_jti"
+  end
+
+  create_table "meal_logs", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.date "ate_on"
+    t.integer "meal_type"
+    t.text "note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_meal_logs_on_user_id"
   end
 
   create_table "messages", force: :cascade do |t|
@@ -111,6 +142,25 @@ ActiveRecord::Schema[7.1].define(version: 2025_09_13_141556) do
     t.bigint "post_id"
     t.index ["post_id"], name: "index_messages_on_post_id"
     t.index ["sender_id", "receiver_id"], name: "index_messages_on_sender_id_and_receiver_id"
+  end
+
+  create_table "nutrition_profiles", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.date "birth_date"
+    t.integer "height_cm"
+    t.decimal "weight_kg"
+    t.integer "activity_level"
+    t.integer "goal"
+    t.integer "calorie_target"
+    t.integer "protein_target_g"
+    t.integer "carbs_target_g"
+    t.integer "fat_target_g"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "cycle_length"
+    t.integer "period_length"
+    t.date "last_period_start"
+    t.index ["user_id"], name: "index_nutrition_profiles_on_user_id"
   end
 
   create_table "positions", force: :cascade do |t|
@@ -233,9 +283,12 @@ ActiveRecord::Schema[7.1].define(version: 2025_09_13_141556) do
   add_foreign_key "encouragements", "users"
   add_foreign_key "follows", "users", column: "followed_id"
   add_foreign_key "follows", "users", column: "follower_id"
+  add_foreign_key "food_entries", "meal_logs"
+  add_foreign_key "meal_logs", "users"
   add_foreign_key "messages", "posts"
   add_foreign_key "messages", "users", column: "receiver_id"
   add_foreign_key "messages", "users", column: "sender_id"
+  add_foreign_key "nutrition_profiles", "users"
   add_foreign_key "positions", "sessions"
   add_foreign_key "posts", "users"
   add_foreign_key "reactions", "stories"

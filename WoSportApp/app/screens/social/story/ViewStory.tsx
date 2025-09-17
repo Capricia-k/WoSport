@@ -25,11 +25,12 @@ import ReactionList from "../../../../components/ReactionList";
 import ReactionPicker from "../../../../components/ReactionPicker";
 import StoryProgressBar from "../../../../components/StoryProgressBar";
 import { useUser } from "../../../../context/UserContext";
-import { apiFetch } from "../../../../services/api";
+import { API_BASE, apiFetch } from "../../../../services/api";
+import { getItem } from "../../../../services/storage";
 
 const { width, height } = Dimensions.get("window");
 const IMAGE_DURATION = 5000;
-const VIDEO_DURATION = 15000;
+const VIDEO_DURATION = 25000;
 
 interface StoryMedia {
   url: string;
@@ -47,15 +48,6 @@ interface Story {
     first_name: string;
     avatar_url: string;
   };
-}
-
-interface StoriesResponse {
-  user: {
-    id: number;
-    first_name: string;
-    avatar_url: string;
-  };
-  stories: Story[];
 }
 
 interface Reaction {
@@ -149,6 +141,15 @@ export default function StoryViewer() {
       const data: Reaction[] = await apiFetch(`stories/${storyId}/reactions`, {
         auth: true,
       });
+
+      // DEBUG: Vérifiez les IDs en double
+      console.log("🔍 Reactions data:", data);
+      const ids = data.map((r) => r.id);
+      const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
+      if (duplicateIds.length > 0) {
+        console.warn("⚠️ Duplicate reaction IDs found:", duplicateIds);
+      }
+
       setReactions(data);
     } catch (error) {
       console.error("Error fetching reactions:", error);
@@ -217,20 +218,66 @@ export default function StoryViewer() {
     setIsPaused(true);
   };
 
-  const handleReaction = async (reactionType: string) => {
+  const handleReaction = async (reactionType: number) => {
     try {
-      const currentStory = stories[currentIndex];
-      const response = await apiFetch(`stories/${currentStory.id}/reactions`, {
-        method: "POST",
-        auth: true,
-        body: JSON.stringify({ reaction_type: reactionType }),
-      });
+      console.log("🔍 Reaction type received:", reactionType);
 
-      setReactions((prev) => [...prev, response as Reaction]);
+      const reactionTypeMap: { [key: number]: string } = {
+        0: "like",
+        1: "love",
+        2: "laugh",
+        3: "wow",
+        4: "sad",
+        5: "angry",
+      };
+
+      const reactionTypeString = reactionTypeMap[reactionType];
+
+      if (!reactionTypeString) {
+        console.error("❌ Invalid reaction type:", reactionType);
+        return;
+      }
+
+      const currentStory = stories[currentIndex];
+      const token = await getItem("userToken");
+
+      if (!token) {
+        console.error("❌ User not logged in");
+        return;
+      }
+
+      const bodyData = { reaction_type: reactionTypeString };
+
+      console.log("🔍 Request body:", JSON.stringify(bodyData));
+
+      const response = await fetch(
+        `${API_BASE}/stories/${currentStory.id}/reactions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(bodyData),
+        }
+      );
+
+      const responseText = await response.text();
+      console.log("🔍 Response status:", response.status);
+      console.log("🔍 Response text:", responseText);
+
+      if (!response.ok) {
+        throw new Error(responseText);
+      }
+
+      const responseData = responseText ? JSON.parse(responseText) : {};
+      console.log("✅ Reaction added successfully:", responseData);
+
+      setReactions((prev) => [...prev, responseData as Reaction]);
       setShowReactionPicker(false);
       setIsPaused(false);
     } catch (error) {
-      console.error("Error adding reaction:", error);
+      console.error("❌ Error adding reaction:", error);
     }
   };
 
@@ -246,7 +293,6 @@ export default function StoryViewer() {
         auth: true,
         body: JSON.stringify({
           content: `📱 Réponse à votre story: ${replyText}`,
-          // N'envoyez PAS story_id - votre API ne le supporte pas
         }),
       });
 
@@ -333,13 +379,27 @@ export default function StoryViewer() {
   if (stories.length === 0) {
     return (
       <View style={styles.center}>
-        <AppText style={{ color: "white" }}>Aucune story disponible</AppText>
+        <AppText
+          style={{ color: "white", marginBottom: 20, textAlign: "center" }}
+        >
+          Aucune story disponible
+        </AppText>
+
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <AppText style={styles.backButtonText}>Retour</AppText>
+        </TouchableOpacity>
       </View>
     );
   }
 
   const currentStory = stories[currentIndex];
-  const isVideo = currentStory.media[0]?.content_type?.startsWith("video/");
+  const handleOpenReactionPicker = () => {
+    setShowReactionPicker(true);
+    setIsPaused(true);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -347,6 +407,38 @@ export default function StoryViewer() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
       >
+        {/* Bouton réaction en dehors du TapGestureHandler */}
+        {!showReactionPicker && !showReplyInput && (
+          <TouchableOpacity
+            style={styles.reactionButton}
+            onPress={handleOpenReactionPicker}
+          >
+            <AppText style={styles.reactionButtonText}>😊</AppText>
+          </TouchableOpacity>
+        )}
+
+        {/* Bouton liste des réactions en dehors du TapGestureHandler */}
+        {reactions.length > 0 && !showReactionPicker && (
+          <TouchableOpacity
+            style={styles.reactionCountButton}
+            onPress={() => setShowReactionList(true)}
+          >
+            <AppText style={styles.reactionCountText}>
+              {reactions.length} ❤️
+            </AppText>
+          </TouchableOpacity>
+        )}
+
+        {/* Bouton réponse en dehors du TapGestureHandler */}
+        {!showReactionPicker && (
+          <TouchableOpacity
+            style={styles.replyButton}
+            onPress={() => setShowReplyInput(true)}
+          >
+            <AppText style={styles.replyText}>💬 Répondre</AppText>
+          </TouchableOpacity>
+        )}
+
         <LongPressGestureHandler
           onHandlerStateChange={({ nativeEvent }) => {
             if (nativeEvent.state === State.ACTIVE) {
@@ -371,7 +463,7 @@ export default function StoryViewer() {
                   const isVideoStory =
                     story.media[0]?.content_type?.startsWith("video/");
                   return (
-                    <View key={index} style={styles.progressBarWrapper}>
+                    <View key={story.id} style={styles.progressBarWrapper}>
                       <StoryProgressBar
                         duration={
                           isVideoStory ? VIDEO_DURATION : IMAGE_DURATION
@@ -420,44 +512,6 @@ export default function StoryViewer() {
                 </AppText>
               </View>
 
-              {/* Réactions */}
-              <ReactionPicker
-                visible={showReactionPicker}
-                onReaction={handleReaction}
-                onClose={() => {
-                  setShowReactionPicker(false);
-                  setIsPaused(false);
-                }}
-              />
-
-              <ReactionList
-                reactions={reactions}
-                visible={showReactionList}
-                // onClose={() => setShowReactionList(false)}
-              />
-
-              {/* Bouton réactions */}
-              {reactions.length > 0 && !showReactionPicker && (
-                <TouchableOpacity
-                  style={styles.reactionCountButton}
-                  onPress={() => setShowReactionList(!showReactionList)}
-                >
-                  <AppText style={styles.reactionCountText}>
-                    {reactions.length} ❤️
-                  </AppText>
-                </TouchableOpacity>
-              )}
-
-              {/* Bouton réponse */}
-              {!showReactionPicker && (
-                <TouchableOpacity
-                  style={styles.replyButton}
-                  onPress={() => setShowReplyInput(true)}
-                >
-                  <AppText style={styles.replyText}>💬 Répondre</AppText>
-                </TouchableOpacity>
-              )}
-
               {/* Bouton fermeture */}
               <TouchableOpacity
                 style={styles.closeButton}
@@ -490,6 +544,22 @@ export default function StoryViewer() {
                   </TouchableOpacity>
                 </View>
               )}
+
+              {/* Réactions */}
+              <ReactionPicker
+                visible={showReactionPicker}
+                onReaction={handleReaction}
+                onClose={() => {
+                  setShowReactionPicker(false);
+                  setIsPaused(false);
+                }}
+              />
+
+              <ReactionList
+                reactions={reactions}
+                visible={showReactionList}
+                onClose={() => setShowReactionList(false)}
+              />
             </View>
           </TapGestureHandler>
         </LongPressGestureHandler>
@@ -578,7 +648,7 @@ const styles = StyleSheet.create({
   },
   reactionCountButton: {
     position: "absolute",
-    bottom: 120,
+    bottom: 180,
     right: 16,
     backgroundColor: "rgba(0, 0, 0, 0.7)",
     padding: 10,
@@ -638,5 +708,32 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  reactionButton: {
+    position: "absolute",
+    bottom: 120,
+    right: 16,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+  reactionButtonText: {
+    fontSize: 24,
+  },
+  backButton: {
+    backgroundColor: "#E24741",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginTop: 20,
+  },
+  backButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });

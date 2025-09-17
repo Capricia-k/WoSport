@@ -1,0 +1,27 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  gender: 1
+  birth_date: 2025-09-17
+  height_cm: 1
+  weight_kg: 9.99
+  activity_level: 1
+  goal: 1
+  calorie_target: 1
+  protein_target_g: 1
+  carbs_target_g: 1
+  fat_target_g: 1
+
+two:
+  user: two
+  gender: 1
+  birth_date: 2025-09-17
+  height_cm: 1
+  weight_kg: 9.99
+  activity_level: 1
+  goal: 1
+  calorie_target: 1
+  protein_target_g: 1
+  carbs_target_g: 1
+  fat_target_g: 1
